@@ -1,68 +1,73 @@
-'''
-image ID
-file paths
-saving uploads
-finding images
-finding current version
-creating next version
-reading metadata
-'''
-
 from pydantic import BaseModel
 import json
-import random 
+import random
 import time
-from pathlib import Path 
+from pathlib import Path
 from PIL import Image
 from src.domain.schemas.image import ImageMetadata, ImageVersion
 
+
 class ImageInfo(BaseModel):
-    format :    str
-    width:      int
-    height:     int
-    frames :    int
+    format: str
+    width: int
+    height: int
+    frames: int
+
 
 class ImageService:
-    def __init__(self,storage_path:str = "data/images"):
+
+    def __init__(self, storage_path: str = "data/images"):
+        """Initialize the image service."""
         self.storage_path = Path(storage_path)
 
-    def generate_image_id(self)-> str:
-        """Create image id per uploaded file"""
+    def generate_image_id(self) -> str:
+        """Create an image ID for the uploaded file."""
         timestamp = int(time.time() * 1000)
-        rand_num = random.randint(0,9999)
+        rand_num = random.randint(0, 9999)
         gen_filename = f"{timestamp}_{rand_num}"
         return gen_filename
-    
-    def create_image_dir(self,image_id:str)->Path :
-        "Create dir to save uploaded file"
-        image_dir = self.storage_path/image_id 
+
+    def create_image_dir(self, image_id: str) -> Path:
+        """Create a directory to save the uploaded file."""
+        image_dir = self.storage_path / image_id
         image_dir.mkdir(
             parents=True,
             exist_ok=True
         )
         return image_dir
 
-    def save_original(self,image_id:str,filename:str,content:bytes)->Path:
-        """Save the uploaded file to the dir"""
+    def save_original(
+        self,
+        image_id: str,
+        filename: str,
+        content: bytes
+    ) -> Path:
+        """Save the uploaded file to the directory."""
         image_dir = self.create_image_dir(image_id=image_id)
         extension = Path(filename).suffix
         output_path = image_dir / f"original{extension}"
         output_path.write_bytes(content)
         return output_path
 
-    def get_image_dir(self,image_id:str)->Path:
-        """Get the path to the saved file from image_id"""
-        image_dir = self.storage_path / image_id 
+    def get_image_dir(self, image_id: str) -> Path:
+        """Get the path to the image directory."""
+        image_dir = self.storage_path / image_id
         return image_dir
 
-    def create_metadata(self, image_id:str, filename:str,inspect_result:ImageInfo)->ImageMetadata:
+    def create_metadata(
+        self,
+        image_id: str,
+        inspect_result: ImageInfo,
+        saved_path: Path,
+    ) -> ImageMetadata:
+        """Create metadata for the uploaded image."""
         metadata = ImageMetadata(
             image_id=image_id,
             current_version=0,
             versions=[
                 ImageVersion(
                     version=0,
-                    file=filename,
+                    file=saved_path.name,
                     operation="upload",
                     format=inspect_result.format,
                     width=inspect_result.width,
@@ -71,13 +76,16 @@ class ImageService:
                 )
             ],
         )
+
         self.save_metadata(
             image_id=image_id,
             metadata=metadata,
         )
 
-    def load_metadata(self, image_id: str) -> dict:
-        """Load metadata from the uploaded image"""
+        return metadata
+
+    def load_metadata(self, image_id: str) -> ImageMetadata:
+        """Load metadata for the uploaded image."""
         metadata_path = self.get_image_dir(image_id) / "metadata.json"
 
         if not metadata_path.exists():
@@ -89,8 +97,12 @@ class ImageService:
             data = json.load(file)
             return ImageMetadata(**data)
 
-    def save_metadata(self,image_id: str,metadata: ImageMetadata)->None:
-        """Save metadata from the uploaded image"""
+    def save_metadata(
+        self,
+        image_id: str,
+        metadata: ImageMetadata
+    ) -> None:
+        """Save metadata for the uploaded image."""
         image_dir = self.create_image_dir(image_id)
 
         metadata_path = image_dir / "metadata.json"
@@ -102,32 +114,32 @@ class ImageService:
                 indent=4,
             )
 
-    def get_current_image(self,image_id:str)->Path: 
-        """Get the path from the current uploaded image"""
+    def get_current_image(self, image_id: str) -> Path:
+        """Get the path to the current image."""
         metadata = self.load_metadata(image_id=image_id)
         current_ver = metadata.current_version
         version = metadata.versions[current_ver]
 
         return self.get_image_dir(image_id=image_id) / version.file
 
-    def get_next_ver(self,image_id:str)->int:
-        """Get image next version based on current version"""
+    def get_next_ver(self, image_id: str) -> int:
+        """Get the next image version based on the current version."""
         metadata = self.load_metadata(image_id=image_id)
         current_ver = metadata.current_version
         return current_ver + 1
 
-    def inspect_image(self,image_path:Path)->dict:
+    def inspect_image(self, image_path: Path) -> ImageInfo:
+        """Inspect the image and return its information."""
         with Image.open(image_path) as image:
-            w,h = image.size
-            frames = getattr(image, "n_frames",1)
+            w, h = image.size
+            frames = getattr(image, "n_frames", 1)
             image_format = image.format
 
         inspect_response = ImageInfo(
             format=image_format,
             height=h,
-            width = w,
-            frames = frames
+            width=w,
+            frames=frames
         )
-        return inspect_response
 
-  
+        return inspect_response
