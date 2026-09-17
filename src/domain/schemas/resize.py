@@ -12,3 +12,4 @@ class ResizeResponse(BaseModel):
     width:          int | None = None
     height:         int | None = None
     frames:         int | None = None
+    
