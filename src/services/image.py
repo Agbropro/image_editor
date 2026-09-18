@@ -43,7 +43,7 @@ class ImageService:
     def get_image_dir(self, image_id: str) -> Path:
         """Get the path to the image directory."""
         image_dir = self.storage_path / image_id
-        print(f"[{image_id}] [{self.log_block}] Image dir of image {image_id}")
+        print(f"[{image_id}] [{self.log_block}] Image dir of image {image_id} : {image_dir}")
         return image_dir
 
     def create_metadata(
@@ -130,36 +130,53 @@ class ImageService:
             frames = getattr(image, "n_frames", 1)
             image_format = image.format
 
-        inspect_response = ImageInfo(
+        return ImageInfo(
             format=image_format,
             height=h,
             width=w,
             frames=frames
         )
-
-        return inspect_response
     
     def save_version(self,image_id:str, image:Image,operation:str)->int:
         """Save current version based on the modification"""
         metadata = self.load_metadata(image_id=image_id)
         version = self.get_next_ver(image_id=image_id)
         current_image = self.get_current_image(image_id=image_id)
+
         extension = current_image.suffix
         filename = f"v{version:03d}{extension}"
-        
         output_path = self.get_image_dir(image_id=image_id) / filename
         if extension.lower() in [".jpg", ".jpeg"]:
             if image.mode in ["RGBA", "LA"]:
                 image = image.convert("RGB")
-        image.save(output_path)
+                        
+        if extension.lower() == ".gif":
+            gif_image = image.resized_frames
+            gif_image[0].save(
+                output_path,
+                save_all=True,
+                append_images=gif_image[1:],
+                durations = image.durations,
+                loop = image.loop
+            )
+            width = gif_image[0].width
+            height = gif_image[0].height
+            frames = len(gif_image)
+            
+        else:
+            image.save(output_path)
+            width = image.width
+            height = image.height
+            frames = getattr(image, "n_frames", 1)
+            
         new_version = ImageVersion(
             version = version,
             file= filename,
             operation= operation,
             format = metadata.versions[metadata.current_version].format,
-            width = image.width,
-            height = image.height,
-            frames = getattr(image, "n_frames", 1)
+            width = width,
+            height = height,
+            frames = frames
         )
         metadata.versions.append(new_version)
         metadata.current_version = version
