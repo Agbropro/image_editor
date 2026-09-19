@@ -8,8 +8,6 @@ class UploadResponse(BaseModel):
     height:    int | None = None
     frames:    int | None = None
 
-
-
 class ImageVersion(BaseModel):
     version:    int
     file:       str
@@ -18,7 +16,6 @@ class ImageVersion(BaseModel):
     width:      int
     height:     int
     frames:     int
-
 
 class ImageMetadata(BaseModel):
     image_id:           str

@@ -7,7 +7,6 @@ class ResizedGIF(BaseModel):
     disposals :     int
     loop :          int
     
-    
 class ResizeRequest(BaseModel):
     width:                  int | None = None
     height:                 int | None = None

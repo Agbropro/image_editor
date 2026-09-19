@@ -39,7 +39,7 @@ async def upload_image(file: UploadFile = File(...),): # image multipart, (...) 
             status_code=400,
             detail=str(error)
         )
-@router.get("/images/{image_id}",response_model=ImageMetadata)
+@router.get("/images/{image_id}/details",response_model=ImageMetadata)
 def get_image(image_id:str):
     """Get image data from id"""
     try:
@@ -69,9 +69,8 @@ def view(image_id:str)->FileResponse:
         )
 
 @router.get("/images/{image_id}/download")
-def view(image_id:str)->FileResponse:
+def download(image_id:str)->FileResponse:
     try:
-
         current_image = image_service.get_current_image(image_id=image_id)
         
         return FileResponse(

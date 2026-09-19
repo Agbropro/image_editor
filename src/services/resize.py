@@ -46,16 +46,16 @@ class ResizeService:
             if new_w is not None and new_h is not None and scale is None:
                 new_width = new_w
                 new_height = new_h
-
-        if new_w is not None :
-            new_width = new_w
-            new_height = int((new_w/ori_w) * ori_h)
-        elif new_h is not None:
-            new_height = new_h
-            new_width = int((new_h/ori_h) * ori_w)
-        elif scale is not None:
-            new_height = int(scale * ori_h)
-            new_width = int(scale * ori_w)
+        else:
+            if new_w is not None :
+                new_width = new_w
+                new_height = int((new_w/ori_w) * ori_h)
+            elif new_h is not None:
+                new_height = new_h
+                new_width = int((new_h/ori_h) * ori_w)
+            elif scale is not None:
+                new_height = int(scale * ori_h)
+                new_width = int(scale * ori_w)
         print(
             f"[Resize-Service] Resized Image New Width : {new_width} | "
             f"New Height : {new_height}"
