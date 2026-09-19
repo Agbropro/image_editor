@@ -6,15 +6,9 @@ Pillow resizing
 GIF frame processing
 saving resized image
 '''
-from pathlib import Path
-from PIL import Image
-from src.domain.schemas.resize import ResizeRequest
-from pydantic import BaseModel
-from typing import Any
-class ResizedGIF(BaseModel):
-    resized_frames: list[Any]
-    durations :     list[int]
-    loop :          int
+
+from PIL import Image, ImageSequence
+from src.domain.schemas.resize import ResizeRequest, ResizedGIF
     
 class ResizeService:
     def __validate_request(self,request)->bool:
@@ -39,18 +33,19 @@ class ResizeService:
         scale = request.scale
         print(f"new_w : {new_w}, new_h : {new_h}, scale : {scale}")
         maintain_aspect_ratio = request.maintain_aspect_ratio 
-        if not (
-            (new_w is not None)
-            ^ (new_h is not None)
-            ^ (scale is not None)
-        ):
-            raise ValueError(
-                "Exactly one of width, height, or scale must be provided"
-            )
-            
+        # if not (
+        #     (new_w is not None)
+        #     ^ (new_h is not None)
+        #     ^ (scale is not None)
+        # ):
+        #     raise ValueError(
+        #         "Exactly one of width, height, or scale must be provided"
+        #     )
+        
         if not maintain_aspect_ratio:
-            print("[Resize-Service] Original image, not maintain aspect ratio not implemented yet")
-            return ori_w,ori_h
+            if new_w is not None and new_h is not None and scale is None:
+                new_width = new_w
+                new_height = new_h
 
         if new_w is not None :
             new_width = new_w
@@ -88,24 +83,26 @@ class ResizeService:
         )
         
         return resized_image
-    
+    #disposal is a setting that tells the GIF player what to do with the previous frame before drawing the next frame
     def resize_gif(self,image:Image,width:int,height:int)-> ResizedGIF:
         """Resize image for gif"""
         loop = image.info.get("loop",0)
         resized_frames = []
         durations = []
-        for i in range(image.n_frames):
-            image.seek(i)
-            duration = image.info.get("duration",100)
-            durations.append(duration)
-            frame = image.convert("RGBA")
+        
+        for frame in ImageSequence.Iterator(image):
             resized_frame = frame.resize(
                 (width,height),
-                Image.Resampling.LANCZOS
-                )
+                Image.NEAREST
+            )
+            
+            duration = frame.info.get("duration",100)
+            durations.append(duration)
+           
             resized_frames.append(resized_frame)
         return ResizedGIF(
                             resized_frames = resized_frames,
                             durations=durations,
+                            disposals=2, #disposals 2 mean we completely dispose the previous frame before saving the next frame
                             loop=loop
-                        )
+                    )

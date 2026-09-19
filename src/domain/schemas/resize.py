@@ -1,5 +1,13 @@
 from pydantic import BaseModel, ConfigDict
+from typing import Any
 
+class ResizedGIF(BaseModel):
+    resized_frames: list[Any]
+    durations :     list[int]
+    disposals :     int
+    loop :          int
+    
+    
 class ResizeRequest(BaseModel):
     width:                  int | None = None
     height:                 int | None = None

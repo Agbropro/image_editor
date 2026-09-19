@@ -5,6 +5,7 @@ import time
 from pathlib import Path
 from PIL import Image
 from src.domain.schemas.image import ImageMetadata, ImageVersion, ImageInfo
+from src.domain.schemas.resize import ResizedGIF
 
 class ImageService:
 
@@ -12,6 +13,7 @@ class ImageService:
         """Initialize the image service."""
         self.storage_path = Path(storage_path)
         self.log_block = "Image-Service"
+        
     def generate_image_id(self) -> str:
         """Create an image ID for the uploaded file."""
         timestamp = int(time.time() * 1000)
@@ -137,7 +139,7 @@ class ImageService:
             frames=frames
         )
     
-    def save_version(self,image_id:str, image:Image,operation:str)->int:
+    def save_version(self,image_id:str, image:Image or ResizedGIF ,operation:str)->int:
         """Save current version based on the modification"""
         metadata = self.load_metadata(image_id=image_id)
         version = self.get_next_ver(image_id=image_id)
@@ -151,17 +153,20 @@ class ImageService:
                 image = image.convert("RGB")
                         
         if extension.lower() == ".gif":
-            gif_image = image.resized_frames
-            gif_image[0].save(
+            gif_frames = image.resized_frames
+            width = gif_frames[0].width
+            height = gif_frames[0].height
+            frames = len(gif_frames)
+            
+            gif_frames[0].save(
                 output_path,
                 save_all=True,
-                append_images=gif_image[1:],
+                append_images=gif_frames[1:],
                 durations = image.durations,
-                loop = image.loop
+                loop = image.loop,
+                disposal = image.disposals, # can be written as [image.disposals] * gif_frames if custom frame disposal is needed
             )
-            width = gif_image[0].width
-            height = gif_image[0].height
-            frames = len(gif_image)
+            
             
         else:
             image.save(output_path)
