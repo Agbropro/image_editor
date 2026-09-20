@@ -1,5 +1,7 @@
 import { ChangeEvent, FormEvent, useState } from "react";
 import { imageDownloadUrl, imageViewUrl, ImageInfo, resizeImage, ResizeResult, uploadImage } from "./api";
+import { handheldIcon } from "./assets";
+import PixelGarden from "./components/PixelGarden";
 
 type InputMode = "width" | "height" | "scale";
 
@@ -81,7 +83,7 @@ function App() {
   return (
     <main className="page-shell">
       <header className="site-header">
-        <div className="brand-mark" aria-hidden="true">RS</div>
+        <div className="brand-mark" aria-hidden="true"><img src={handheldIcon} alt="" /></div>
         <div>
           <p className="eyebrow">GAMEBOY IMAGE LAB</p>
           <h1>RETRO SCALE</h1>
@@ -151,6 +153,7 @@ function App() {
         DOWNLOAD RESULT
       </a>
 
+      <PixelGarden />
       <footer>RETRO SCALE // IMAGE EDITOR // BUILD 001</footer>
     </main>
   );
@@ -161,7 +164,7 @@ function PreviewCard({ title, imageUrl, details }: { title: string; imageUrl: st
     <article className="preview-card pixel-border">
       <div className="preview-title">{title}</div>
       <div className="preview-window">
-        {imageUrl ? <img src={imageUrl} alt={`${title.toLowerCase()} preview`} /> : <span className="empty-preview">?</span>}
+        {imageUrl ? <img src={imageUrl} alt={`${title.toLowerCase()} preview`} /> : <img className="empty-preview-art" src={handheldIcon} alt="No image yet" />}
       </div>
       <p className="preview-details">{details}</p>
     </article>
