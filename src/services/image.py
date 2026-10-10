@@ -4,36 +4,28 @@ import random
 import time
 from pathlib import Path
 from PIL import Image
-from src.domain.schemas.image import ImageMetadata, ImageVersion
-
-
-class ImageInfo(BaseModel):
-    format: str
-    width: int
-    height: int
-    frames: int
-
+from src.domain.schemas.image import ImageMetadata, ImageVersion, ImageInfo
+from src.domain.schemas.resize import ResizedGIF
 
 class ImageService:
 
-    def __init__(self, storage_path: str = "data/images"):
+    def __init__(self, storage_path: str = "data/images")->str:
         """Initialize the image service."""
         self.storage_path = Path(storage_path)
-
+        self.log_block = "Image-Service"
+        
     def generate_image_id(self) -> str:
         """Create an image ID for the uploaded file."""
         timestamp = int(time.time() * 1000)
         rand_num = random.randint(0, 9999)
-        gen_filename = f"{timestamp}_{rand_num}"
-        return gen_filename
+        image_id = f"{timestamp}_{rand_num}"
+        print(f"[{image_id}] [{self.log_block}] Generated ID : {image_id}")
+        return image_id
 
     def create_image_dir(self, image_id: str) -> Path:
         """Create a directory to save the uploaded file."""
         image_dir = self.storage_path / image_id
-        image_dir.mkdir(
-            parents=True,
-            exist_ok=True
-        )
+        image_dir.mkdir(parents=True,exist_ok=True)
         return image_dir
 
     def save_original(
@@ -47,11 +39,13 @@ class ImageService:
         extension = Path(filename).suffix
         output_path = image_dir / f"original{extension}"
         output_path.write_bytes(content)
+        print(f"[{image_id}] [{self.log_block}] image {image_id} saved to {output_path}")
         return output_path
 
     def get_image_dir(self, image_id: str) -> Path:
         """Get the path to the image directory."""
         image_dir = self.storage_path / image_id
+        print(f"[{image_id}] [{self.log_block}] Image dir of image {image_id} : {image_dir}")
         return image_dir
 
     def create_metadata(
@@ -81,7 +75,7 @@ class ImageService:
             image_id=image_id,
             metadata=metadata,
         )
-
+        print(f"[{image_id}] [{self.log_block}] Metadata has been created for image {image_id} | saved in {image_id}")
         return metadata
 
     def load_metadata(self, image_id: str) -> ImageMetadata:
@@ -89,10 +83,12 @@ class ImageService:
         metadata_path = self.get_image_dir(image_id) / "metadata.json"
 
         if not metadata_path.exists():
+            print(f"[{image_id}] [{self.log_block}] Metadata not found for image {image_id}")
             raise FileNotFoundError(
                 f"Metadata not found for image: {image_id}"
             )
 
+        print(f"[{image_id}] [{self.log_block}] Opening Metadata for image {image_id}")
         with metadata_path.open("r", encoding="utf-8") as file:
             data = json.load(file)
             return ImageMetadata(**data)
@@ -107,6 +103,7 @@ class ImageService:
 
         metadata_path = image_dir / "metadata.json"
 
+        print(f"[{image_id}] [{self.log_block}] Metadata image {image_id} saved in {metadata_path}")
         with metadata_path.open("w", encoding="utf-8") as file:
             json.dump(
                 metadata.model_dump(),
@@ -135,11 +132,79 @@ class ImageService:
             frames = getattr(image, "n_frames", 1)
             image_format = image.format
 
-        inspect_response = ImageInfo(
+        return ImageInfo(
             format=image_format,
             height=h,
             width=w,
             frames=frames
         )
+    
+    def save_version(self,image_id:str, image:Image or ResizedGIF ,operation:str)->int:
+        """Save current version based on the modification"""
+        metadata = self.load_metadata(image_id=image_id)
+        version = self.get_next_ver(image_id=image_id)
+        current_image = self.get_current_image(image_id=image_id)
 
-        return inspect_response
+        extension = current_image.suffix
+        filename = f"v{version:03d}{extension}"
+        output_path = self.get_image_dir(image_id=image_id) / filename
+        if extension.lower() in [".jpg", ".jpeg"]:
+            if image.mode in ["RGBA", "LA"]:
+                image = image.convert("RGB")
+                        
+        if extension.lower() == ".gif":
+            gif_frames = image.resized_frames
+            width = gif_frames[0].width
+            height = gif_frames[0].height
+            frames = len(gif_frames)
+            
+            gif_frames[0].save(
+                output_path,
+                save_all=True,
+                append_images=gif_frames[1:],
+                durations = image.durations,
+                loop = image.loop,
+                disposal = image.disposals, # can be written as [image.disposals] * gif_frames if custom frame disposal is needed
+            )
+            
+            
+        else:
+            image.save(output_path)
+            width = image.width
+            height = image.height
+            frames = getattr(image, "n_frames", 1)
+            
+        new_version = ImageVersion(
+            version = version,
+            file= filename,
+            operation= operation,
+            format = metadata.versions[metadata.current_version].format,
+            width = width,
+            height = height,
+            frames = frames
+        )
+        metadata.versions.append(new_version)
+        metadata.current_version = version
+        self.save_metadata(image_id=image_id,metadata=metadata)
+        print(f"[{image_id}] [{self.log_block}] Save Version for image {image_id} | Version {version}")
+        return version
+    
+"""
+load metadata
+     ↓
+get version 1
+     ↓
+create v001.gif
+     ↓
+save v001.gif
+     ↓
+create ImageVersion
+     ↓
+append to metadata.versions
+     ↓
+current_version = 1
+     ↓
+save metadata.json
+     ↓
+return 1
+"""

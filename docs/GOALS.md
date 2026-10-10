@@ -11,4 +11,4 @@
     - Upload Image (single or multiple or from copy)
     - Save uploaded image in data/uploaded/{uploaded_image_id}.{ext}
     - uploaded_image_id -> generated from current BE timestamp + random integer
-    - Resize image working like resizedr
+    - Resize image working like ezgif -> can resize gif
