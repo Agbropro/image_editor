@@ -34,7 +34,11 @@ h2 { font-size: clamp(16px, 3vw, 23px); }
 .pixel-border { border: 3px solid var(--color-ink); box-shadow: 7px 7px 0 var(--color-forest); }
 .control-panel { margin: 38px auto 34px; max-width: 920px; padding: 26px; background: var(--color-cream); }
 .panel-heading { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; }
+.panel-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
 .panel-number { font-family: var(--font-pixel); color: var(--color-brown); font-size: 24px; }
+.reset-button { border: 3px solid var(--color-ink); border-radius: 0; background: var(--color-cream); color: var(--color-brown); padding: 9px 10px; font-family: var(--font-pixel); font-size: 9px; box-shadow: 4px 4px 0 var(--color-ink); transition: transform .1s, box-shadow .1s; }
+.reset-button:not(:disabled):hover { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--color-ink); }
+.reset-button:focus-visible { outline: 3px solid var(--color-forest); outline-offset: 5px; }
 .upload-button, .button-primary, .download-button { display: inline-block; border: 3px solid var(--color-ink); background: var(--color-forest); color: var(--color-cream); padding: 13px 18px; text-align: center; font-family: var(--font-pixel); font-size: 11px; box-shadow: 4px 4px 0 var(--color-ink); transition: transform .1s, box-shadow .1s; }
 .upload-button:hover, .button-primary:hover, .download-button.is-ready:hover { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--color-ink); }
 .upload-button input { display: none; }

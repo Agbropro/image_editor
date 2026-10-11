@@ -1,6 +1,10 @@
-from pydantic import BaseModel
+from dataclasses import dataclass
 
-class UploadResponse(BaseModel):
+#frozen mean the object is read only and can only be assigned initialy
+# there are loopholes for frozen, we can modify mutable object such as list, dict, and sets we can add new content like using .append for the initialized variable
+
+@dataclass(frozen = True,slots = True)
+class UploadResponse:
     image_id:  str | None = None
     filename:  str | None = None
     format:    str | None = None
@@ -8,7 +12,8 @@ class UploadResponse(BaseModel):
     height:    int | None = None
     frames:    int | None = None
 
-class ImageVersion(BaseModel):
+@dataclass(slots=True)
+class ImageVersion:
     version:    int
     file:       str
     operation:  str
@@ -17,12 +22,14 @@ class ImageVersion(BaseModel):
     height:     int
     frames:     int
 
-class ImageMetadata(BaseModel):
+@dataclass(slots=True)
+class ImageMetadata:
     image_id:           str
     current_version:    int
     versions:           list[ImageVersion]
-    
-class ImageInfo(BaseModel):
+
+@dataclass(slots=True)
+class ImageInfo:
     format: str
     width: int
     height: int

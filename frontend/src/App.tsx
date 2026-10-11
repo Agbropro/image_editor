@@ -1,5 +1,5 @@
 import { ChangeEvent, FormEvent, useState } from "react";
-import { imageDownloadUrl, imageViewUrl, ImageInfo, resizeImage, ResizeResult, uploadImage } from "./api";
+import { imageDownloadUrl, imageViewUrl, ImageInfo, resetImage, resizeImage, ResizeResult, uploadImage } from "./api";
 import { handheldIcon } from "./assets";
 import PixelGarden from "./components/PixelGarden";
 
@@ -8,6 +8,7 @@ type InputMode = "width" | "height" | "scale";
 function App() {
   const [image, setImage] = useState<ImageInfo | null>(null);
   const [result, setResult] = useState<ResizeResult | null>(null);
+  const [previewRevision, setPreviewRevision] = useState(0);
   const [inputMode, setInputMode] = useState<InputMode>("width");
   const [value, setValue] = useState("");
   const [widthValue, setWidthValue] = useState("");
@@ -78,6 +79,25 @@ function App() {
     }
   }
 
+  async function handleReset() {
+    if (!image || !result) return;
+
+    setBusy(true);
+    setError("");
+    setMessage("Restoring original image...");
+    try {
+      await resetImage(image.image_id);
+      setResult(null);
+      setPreviewRevision((revision) => revision + 1);
+      setMessage("Original image restored. Choose a new resize value.");
+    } catch (resetError) {
+      setError(resetError instanceof Error ? resetError.message : "Reset failed.");
+      setMessage("Reset failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const modifiedImageUrl = result ? imageViewUrl(result.image_id, result.version) : "";
 
   return (
@@ -97,7 +117,10 @@ function App() {
             <p className="eyebrow">IMAGE RESIZER</p>
             <h2>MAKE IT FIT</h2>
           </div>
-          <span className="panel-number">01</span>
+          <div className="panel-actions">
+            <span className="panel-number">01</span>
+            <button className="reset-button" type="button" onClick={handleReset} disabled={busy || !image || !result} aria-label="Reset image to original" title="Reset image to original">RESET</button>
+          </div>
         </div>
 
         <label className="upload-button">
@@ -144,7 +167,7 @@ function App() {
       </section>
 
       <section className="preview-grid">
-        <PreviewCard title="ORIGINAL" imageUrl={image ? imageViewUrl(image.image_id) : ""} details={image ? `${image.width} × ${image.height} / ${image.frames} FRAME${image.frames === 1 ? "" : "S"}` : "WAITING FOR IMAGE"} />
+        <PreviewCard title="ORIGINAL" imageUrl={image ? imageViewUrl(image.image_id, previewRevision) : ""} details={image ? `${image.width} × ${image.height} / ${image.frames} FRAME${image.frames === 1 ? "" : "S"}` : "WAITING FOR IMAGE"} />
         <div className="arrow-divider" aria-hidden="true">→</div>
         <PreviewCard title="MODIFIED" imageUrl={modifiedImageUrl} details={result ? `${result.width} × ${result.height} / VERSION ${result.version}` : "RESIZE TO SEE RESULT"} />
       </section>

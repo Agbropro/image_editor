@@ -36,6 +36,7 @@ All routes use the `/api/v1` prefix. FastAPI's interactive API reference is at `
 | `GET` | `/images/{image_id}/view` | View the current image version inline. |
 | `GET` | `/images/{image_id}/download` | Download the current image version. |
 | `POST` | `/images/{image_id}/resize` | Resize the current version; accepts `width`, `height`, `scale`, and `maintain_aspect_ratio`. |
+| `POST` | `/images/{image_id}/crop` | Crop the current version using `top_left_point` and `bottom_right_point`. |
 | `GET` | `/health` | API health status. |
 | `GET` | `/versions` | API version and description from `config/config.yaml`. |
 
@@ -47,11 +48,15 @@ Uploads, `metadata.json`, and generated versions are stored under `data/images/{
 
 ```text
 src/app.py                 FastAPI application and route registration
-src/routes/                HTTP endpoints
-src/services/              Image storage and Pillow operations
-src/domain/schemas/        Request and response models
+src/delivery/              HTTP routes, Pydantic API models, and dependency providers
+src/application/services/  Upload, resize, and crop use cases
+src/application/ports/     Abstract storage and processing interfaces
+src/infrastructure/        File storage and Pillow implementations
+src/domain/schemas/        Internal dataclasses
 frontend/src/              React application and API client
 config/config.yaml         API version metadata
 ```
 
-Crop service and schemas exist in `src/services/crop.py` and `src/domain/schemas/crop.py`, but crop is not currently registered as an API route.
+The delivery layer converts API models to domain dataclasses and obtains services through FastAPI dependencies. Services receive abstract ports through their constructors. The dependency providers in `src/delivery/dependencies.py` choose the file repository and Pillow processor; override them to use different implementations or isolated storage in tests.
+
+Run backend workflow tests with `python -m unittest discover -s tests`.

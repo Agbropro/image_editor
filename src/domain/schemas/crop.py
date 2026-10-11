@@ -1,18 +1,21 @@
-from pydantic import BaseModel
 from typing import Any
+from dataclasses import dataclass
 
-class CropResponse(BaseModel):
+@dataclass(frozen=True,slots=True)
+class CropResponse:
     image_id :  str | None
     version:    int | None
     width:      int | None
     height:     int | None
     frames :    int | None
 
-class CropRequest(BaseModel):
-    top_left_point :        tuple[int] | None
-    bottom_right_point :    tuple[int] | None
+@dataclass(slots=True)
+class CropRequest:
+    top_left_point :        tuple[int, int]
+    bottom_right_point :    tuple[int, int]
 
-class CroppedGIF(BaseModel):
+@dataclass(slots=True)
+class CroppedGIF:
     cropped_frames: list[Any]
     durations :     list[int]
     disposals :     int

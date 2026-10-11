@@ -53,6 +53,13 @@ export async function resizeImage(
   return response.json();
 }
 
+export async function resetImage(imageId: string): Promise<void> {
+  const response = await fetch(`${API_PREFIX}/images/${imageId}/reset`, {
+    method: "POST",
+  });
+  if (!response.ok) throw new Error(await readError(response));
+}
+
 export function imageViewUrl(imageId: string, version?: number): string {
   const cacheBuster = version === undefined ? "" : `?version=${version}`;
   return `${API_PREFIX}/images/${imageId}/view${cacheBuster}`;

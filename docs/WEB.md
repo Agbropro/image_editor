@@ -95,11 +95,11 @@ The API functions are in [`frontend/src/api.ts`](../frontend/src/api.ts). The fo
 
 | UI control | Frontend function | HTTP request | Backend route |
 |---|---|---|---|
-| Choose file / `UPLOAD IMAGE` | `uploadImage(file)` | `POST /api/v1/images` with multipart field `file` | [`src/routes/image.py`](../src/routes/image.py), `upload_image()` |
-| Original preview | `imageViewUrl(image.image_id)` | `GET /api/v1/images/{image_id}/view` | `view()` in `src/routes/image.py` |
-| `RESIZE` button | `resizeImage(image.image_id, values)` | `POST /api/v1/images/{image_id}/resize` with JSON body | [`src/routes/resize.py`](../src/routes/resize.py), `resize_image()` |
-| Modified preview | `imageViewUrl(result.image_id, result.version)` | `GET /api/v1/images/{image_id}/view?version={version}` | `view()` in `src/routes/image.py` |
-| `DOWNLOAD RESULT` | `imageDownloadUrl(result.image_id)` | `GET /api/v1/images/{image_id}/download` | `download()` in `src/routes/image.py` |
+| Choose file / `UPLOAD IMAGE` | `uploadImage(file)` | `POST /api/v1/images` with multipart field `file` | [`src/delivery/image.py`](../src/delivery/image.py), `upload_image()` |
+| Original preview | `imageViewUrl(image.image_id)` | `GET /api/v1/images/{image_id}/view` | `view()` in `src/delivery/image.py` |
+| `RESIZE` button | `resizeImage(image.image_id, values)` | `POST /api/v1/images/{image_id}/resize` with JSON body | [`src/delivery/resize.py`](../src/delivery/resize.py), `resize_image()` |
+| Modified preview | `imageViewUrl(result.image_id, result.version)` | `GET /api/v1/images/{image_id}/view?version={version}` | `view()` in `src/delivery/image.py` |
+| `DOWNLOAD RESULT` | `imageDownloadUrl(result.image_id)` | `GET /api/v1/images/{image_id}/download` | `download()` in `src/delivery/image.py` |
 
 The `version` query string is currently used as a browser cache-buster. The backend route selects the current image version from metadata; if you later want to view an older version, the backend will need an explicit version parameter and the frontend helper will need to match it.
 
